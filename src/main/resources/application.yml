@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/postgres}
+    username: ${DB_USERNAME:user}
+    password: ${DB_PASSWORD:pass}
+  jpa:
+    hibernate:
+      ddlAuto: update
+  batch:
+    jdbc:
+      initializeSchema: always
