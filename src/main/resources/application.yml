@@ -9,3 +9,6 @@ spring:
   batch:
     jdbc:
       initializeSchema: always
+job:
+  processingChunkSize: 100
+  parseErrorSkipLimit: 15

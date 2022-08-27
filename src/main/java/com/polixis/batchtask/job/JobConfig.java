@@ -23,6 +23,7 @@ import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.item.database.JpaItemWriter;
 import org.springframework.batch.item.file.FlatFileParseException;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
@@ -32,9 +33,6 @@ import org.springframework.core.io.InputStreamResource;
 @EnableBatchProcessing
 public class JobConfig {
 
-	/**
-	 * Formatter for parsing dates like "20/02/2021" or "January 26th, 2021".
-	 */
 	private static final DateTimeFormatter DATE_FORMATTER = new DateTimeFormatterBuilder().appendOptional(
 					DateTimeFormatter.ofPattern("dd/MM/yyyy"))
 			.appendOptional(new DateTimeFormatterBuilder().appendPattern("MMMM ")
@@ -42,6 +40,17 @@ public class JobConfig {
 					.appendPattern(", yyyy")
 					.toFormatter())
 			.toFormatter();
+
+	@Value("${job.processingChunkSize}")
+	private int processingChunkSize;
+
+
+	@Value("${job.parseErrorSkipLimit}")
+	private int parseErrorSkipLimit;
+
+	/**
+	 * Formatter for parsing dates like "20/02/2021" or "January 26th, 2021".
+	 */
 
 	@Bean
 	@StepScope
@@ -74,12 +83,12 @@ public class JobConfig {
 	public Step loadPersonDataStep(StepBuilderFactory stepBuilderFactory, ItemStreamReader<PersonRecord> itemReader,
 								   JpaItemWriter<Person> dbWriter) {
 		return stepBuilderFactory.get("loadPersonsDataStep")
-				.<PersonRecord, Person>chunk(10)
+				.<PersonRecord, Person>chunk(processingChunkSize)
 				.reader(itemReader)
 				.processor(dtoConverter())
 				.writer(dbWriter)
 				.faultTolerant()
-				.skipPolicy(new LimitCheckingItemSkipPolicy(10, Map.of(FlatFileParseException.class, true)))
+				.skipPolicy(new LimitCheckingItemSkipPolicy(parseErrorSkipLimit, Map.of(FlatFileParseException.class, true)))
 				.build();
 	}
 
